@@ -10,13 +10,16 @@ INCLUDE Irvine32.inc
 
 authorName		BYTE		"Lindsey Kvarfordt",0
 programName		BYTE		"--Sorting Arrays--",0
-welcome	    	BYTE		"????",0
+welcome	    	BYTE		"This program will sort and print an integer array of user defined size, along with the median.",0
 ecMssg			BYTE		"**EC: ",0
 bye     		BYTE		"Goodbye! ",0
-intPrompt		BYTE		"Please enter an integer between 10 and 200: ",0
+intPrompt		BYTE		"Please enter an integer between 10 and 200 for the size of your array: ",0
 results			BYTE		"-----RESULTS-----",0
+unsortedHeader  BYTE        "Unsorted Array: ",0
+sortedHeader    BYTE        "Sorted Array: ",0
+medianHeader    BYTE        "Median: ",0
 errorMssg		BYTE		"Out of range. Try again."
-space			BYTE		9,0
+space			BYTE		9,0                         ;use a tab for prettier spacing
 
 size            DWORD       ?
 
