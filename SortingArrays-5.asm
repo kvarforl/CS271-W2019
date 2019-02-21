@@ -8,10 +8,7 @@ INCLUDE Irvine32.inc
 
 .data
 
-authorName		BYTE		"Lindsey Kvarfordt",0
-programName		BYTE		"--Sorting Arrays--",0
-welcome	    	BYTE		"This program will sort and print an integer array of user defined size, along with the median.",0
-ecMssg			BYTE		"**EC: ",0
+introHeader		BYTE		"Lindsey Kvarfordt\n--Sorting Arrays--\nThis program will sort and print an integer array of user defined size, along with the median.\n**EC: ",0
 bye     		BYTE		"Goodbye! ",0
 intPrompt		BYTE		"Please enter an integer between 10 and 200 for the size of your array: ",0
 results			BYTE		"-----RESULTS-----",0
@@ -30,8 +27,9 @@ high            EQU         999
 .code
 
 main PROC
+    push        OFFSET introHeader  ;pass introHeader by reference
+    call        introduction        
 
-    call        introduction
     push        OFFSET size
     call        getUserData
    
@@ -48,20 +46,17 @@ main ENDP
 ;Description: Prints introduction to screen
 ;Dependencies: WriteString, Crlf, edx
 ;--------------------------------
-introduction PROC                    ;Preconditions: none.                   
-    mov		edx, OFFSET programName
+introduction PROC   
+    push    ebp                     ;create stack frame
+    mov     ebp, esp
+
+
+    mov		edx, [epb + 141]        ;move the OFFSET of introHeader into edx (141 may not be correct; could be 142 easily)
 	call	WriteString
 	call	CrLf
-	mov		edx, OFFSET authorName
-	call	WriteString
-	call	CrLf
-    mov     edx, OFFSET welcome
-    call    WriteString
-    call    CrLf
-	mov		edx, OFFSET ecMssg
-	call	WriteString
-	call	CrLf
-	ret
+	
+    pop     ebp
+	ret     141
 introduction ENDP
 
 
