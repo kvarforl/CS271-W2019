@@ -32,6 +32,7 @@ high            EQU         999
 main PROC
 
     call        introduction
+    push        OFFSET size
     call        getUserData
    
     call        goodbye
@@ -66,28 +67,19 @@ introduction ENDP
 
 ;--------------------------------
 ;Preconditions: none
-;PostConditions: the number in EAX is [1,400]
+;PostConditions: the number in EAX is [10,200]
 ;Description: Reads an integer from the user until it is within range
 ;Dependencies: ReadInt, WriteString, validateData, edx
 ;--------------------------------
-getUserData PROC                    
+getUserData PROC    
+    push    ebp                     ;create stack frame
+    mov     ebp, esp
+prompt:
     mov     edx, OFFSET intPrompt   
     call    WriteString
     call    ReadInt
 
-    call    validateData
-	ret
-getUserData ENDP
-
-
-;--------------------------------
-;Preconditions: number to validate is in eax; getUserData exists
-;PostConditions: number in EAX is [1,400]
-;Description: checks that eax is within range
-;Dependencies: getUserData, WriteString, CrLf, eax, edx
-;--------------------------------
-validateData PROC                   
-    cmp     eax, min_size                  ;PostConditions: number in EAX is [min_size,max_size]
+    cmp     eax, min_size         ;compare the value of size to min
     jl      reset
     cmp     eax, max_size
     jg      reset
@@ -96,10 +88,14 @@ reset:
     mov     edx, OFFSET errorMssg
     call    WriteString
     call    CrLf
-    call    getUserData
+    jmp     prompt
 bottom:
-	ret
-validateData ENDP
+    mov     ebx, [ebp+8]            ;move address of size into ebx
+    mov     [ebx], eax              ;move validated userinput value into size address
+    
+    pop     ebp
+	ret     4                       ;size is the only parameter passed (4 bytes)
+getUserData ENDP
 
 
 ;--------------------------------
