@@ -8,7 +8,7 @@ INCLUDE Irvine32.inc
 
 .data
 
-introHeader		BYTE		"Lindsey Kvarfordt\n--Sorting Arrays--\nThis program will sort and print an integer array of user defined size, along with the median.\n**EC: ",0
+introHeader		BYTE		"Lindsey Kvarfordt",10,"--Sorting Arrays--",10,"This program will sort and print an integer array of user defined size, along with the median.",10,"**EC: ",0
 bye     		BYTE		"Goodbye! ",0
 intPrompt		BYTE		"Please enter an integer between 10 and 200 for the size of your array: ",0
 results			BYTE		"-----RESULTS-----",0
@@ -18,21 +18,22 @@ medianHeader    BYTE        "Median: ",0
 errorMssg		BYTE		"Out of range. Try again."
 space			BYTE		9,0                         ;use a tab for prettier spacing
 
-size            DWORD       ?
+arr_size        DWORD       ?
 
 min_size	    EQU	        10	
 max_size        EQU         200      
-low             EQU         100
-high            EQU         999
+low_bound       EQU         100
+high_bound      EQU         999
 .code
 
 main PROC
     push        OFFSET introHeader  ;pass introHeader by reference
     call        introduction        
 
-    push        OFFSET size
+	push		OFFSET intPrompt
+    push        OFFSET arr_size
     call        getUserData
-   
+
     call        goodbye
 
 	exit							; exit to operating system
@@ -51,12 +52,12 @@ introduction PROC
     mov     ebp, esp
 
 
-    mov		edx, [epb + 141]        ;move the OFFSET of introHeader into edx (141 may not be correct; could be 142 easily)
+    mov		edx, [ebp + 8]        ;move the offset of intro header into edx
 	call	WriteString
 	call	CrLf
 	
     pop     ebp
-	ret     141
+	ret     8
 introduction ENDP
 
 
@@ -70,7 +71,7 @@ getUserData PROC
     push    ebp                     ;create stack frame
     mov     ebp, esp
 prompt:
-    mov     edx, OFFSET intPrompt   
+    mov     edx, [ebp+12]  
     call    WriteString
     call    ReadInt
 
