@@ -18,6 +18,7 @@ medianHeader    BYTE        "Median: ",0
 errorMssg		BYTE		"Out of range. Try again."
 space			BYTE		9,0                         ;use a tab for prettier spacing
 
+arr             DWORD       max_size dup(?)
 arr_size        DWORD       ?
 
 min_size	    EQU	        10	
@@ -27,27 +28,29 @@ high_bound      EQU         999
 .code
 
 main PROC
-    push        OFFSET introHeader  ;pass introHeader by reference
-    call        introduction        
+    push        OFFSET introHeader      ;pass introHeader by reference
+    call        printMssg        
 
+    push        OFFSET errorMssg
 	push		OFFSET intPrompt
     push        OFFSET arr_size
     call        getUserData
 
-    call        goodbye
+    push        OFFSET bye
+    call        printMssg               ;pass in bye message
 
-	exit							; exit to operating system
+	exit							    ; exit to operating system
 
 main ENDP
 
 
 ;--------------------------------
-;Preconditions: None
-;PostConditions: Program title, author name, and description are printed to screen
+;Preconditions: A string has been pushed to the stack
+;PostConditions: The first parameter pushed to the stack is printed
 ;Description: Prints introduction to screen
 ;Dependencies: WriteString, Crlf, edx
 ;--------------------------------
-introduction PROC   
+printMssg PROC   
     push    ebp                     ;create stack frame
     mov     ebp, esp
 
@@ -57,15 +60,15 @@ introduction PROC
 	call	CrLf
 	
     pop     ebp
-	ret     8
-introduction ENDP
+	ret     4
+printMssg ENDP
 
 
 ;--------------------------------
-;Preconditions: none
+;Preconditions: parameters are pushed in order; errorMssg, intPrompt, arr_size
 ;PostConditions: the number in EAX is [10,200]
-;Description: Reads an integer from the user until it is within range
-;Dependencies: ReadInt, WriteString, validateData, edx
+;Description: Reads an integer from the user until it is within range (defined by constants)
+;Dependencies: ReadInt, WriteString, edx
 ;--------------------------------
 getUserData PROC    
     push    ebp                     ;create stack frame
@@ -81,7 +84,7 @@ prompt:
     jg      reset
     jmp     bottom
 reset:
-    mov     edx, OFFSET errorMssg
+    mov     edx, [ebp+16]
     call    WriteString
     call    CrLf
     jmp     prompt
@@ -90,23 +93,9 @@ bottom:
     mov     [ebx], eax              ;move validated userinput value into size address
     
     pop     ebp
-	ret     4                       ;size is the only parameter passed (4 bytes)
+	ret     12                       ;3 DWORDs passed (12 bytes)
 getUserData ENDP
 
 
-;--------------------------------
-;Preconditions: None
-;PostConditions: Farewell message is printed
-;Description: Farewell message is printed
-;Dependencies: WriteString, CrLf, edx
-;--------------------------------
-goodbye PROC                        
-	call	CrLf                    
-	call	CrLf
-	mov		edx, OFFSET bye
-	call	WriteString
-	call	Crlf
-	ret
-goodbye ENDP
 
 END main
