@@ -96,6 +96,31 @@ bottom:
 	ret     12                       ;3 DWORDs passed (12 bytes)
 getUserData ENDP
 
+;--------------------------------
+;Preconditions:
+;PostConditions: 
+;Description: Procedure is based on example from pg 297 of textbook
+;Dependencies: 
+;--------------------------------
+fillArr PROC    
+    push    ebp                     ;create stack frame
+    mov     ebp, esp
+    pushad                          ;save all registers
 
+    mov     esi, [ebp+12]           ;store address of first arr elem in esi
+    mov     ecx, [ebp+8]            ;store array size in loop counter
+
+    cmp     ecx,0
+    je      bottom                  ;If counter is zero, skip first loop
+first_loop:
+    mov     eax, high_bound         ;SETS UPPER BOUND (need to set lower; search for RandomRange documentation)
+    call    RandomRange
+    mov     [esi], ax               ;put random num into arr at esi
+    add     esi, 4                  ;increment iterator (esi)
+    loop    first_loop
+bottom:
+    pop     ebp
+    ret     8
+fillArr ENDP
 
 END main
