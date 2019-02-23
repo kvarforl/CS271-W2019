@@ -54,11 +54,14 @@ main PROC
 	push		arr_size
 	call		printArr
 
-	;SORT ARRAY
 	push		OFFSET arr
 	push		arr_size
 	call		sortArr
 
+	push		OFFSET medianHeader
+	push		OFFSET arr
+	push		arr_size
+	call		findMedian
 
 	push		OFFSET sortedHeader	;print  sorted array
 	call		printMssg
@@ -131,14 +134,13 @@ getUserData ENDP
 
 ;--------------------------------
 ;Preconditions: Arr size must not be 0
-;PostConditions: 
+;PostConditions: Array is filled with random numbers between lower and upper bound
 ;Description: Procedure is based on example from pg 297 of textbook
-;Dependencies: 
+;Dependencies: ESI, ECX
 ;--------------------------------
 fillArr PROC    
     push    ebp							;create stack frame
     mov     ebp, esp 
-    ;pushad								;save all registers
 
     mov     esi, [ebp+12]				;store address of first arr elem in esi
     mov     ecx, [ebp+8]				;store array size in loop counter
@@ -191,10 +193,10 @@ bottom:
 printArr ENDP
 
 ;--------------------------------
-;Preconditions:params are pushed in order of OFFSET arr, arr_size
-;PostConditions: 
-;Description: 
-;Dependencies: 
+;Preconditions: params are pushed in order of OFFSET arr, arr_size. Arr must not be size 0.
+;PostConditions: Array has been sorted
+;Description: Sorts array using selection (?) sort
+;Dependencies: ECX, ESI, EDI, EBX, EDX
 ;--------------------------------
 sortArr PROC
 	push	ebp						;create stack frame
@@ -233,5 +235,38 @@ dont_swap:
 	pop		ebp
 	ret		8
 sortArr ENDP
+
+;--------------------------------
+;Preconditions: params are pushed in order of OFFSET medianHeader, OFFSET arr, arr_size. Arr must be sorted
+;PostConditions: median has been printed to the screen
+;Description: Calculates the center index and prints the value at that index
+;Dependencies: printMssg
+;--------------------------------
+findMedian PROC
+	call	CrLf
+	push	ebp					;create stack frame
+	mov		ebp, esp
+	
+	push	[ebp+16]			;print median header
+	call	printMssg
+
+	mov		eax, [ebp+8]		;div arr_size by 2 to find index of median
+	cdq
+	mov		ebx, 2
+	div		ebx					;size/2 is now in eax
+	mov		ebx,4				
+	mul		ebx					;eax is now (size/2)*4
+	mov		ebx, eax
+
+	mov		esi, [ebp+12]			;move address of first arr element into esi
+
+	mov		eax, [esi+ebx]		;move the median address (esi plus half of the size times the size of each element)
+	call	WriteDec
+
+	call	CrLf
+	call	CrLf
+	pop		ebp
+	ret		12
+findMedian ENDP
 
 END main
