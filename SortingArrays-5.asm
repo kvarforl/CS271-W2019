@@ -37,16 +37,19 @@ main PROC
     push        OFFSET introHeader      ;pass introHeader by reference
     call        printMssg        
 
-    push        OFFSET errorMssg
+    push        OFFSET errorMssg		;get the array size
 	push		OFFSET intPrompt
     push        OFFSET arr_size
     call        getUserData
 
-	push		OFFSET arr
+	push		OFFSET arr				;populate array
 	push		arr_size
 	call		fillArr
 
-	push		OFFSET space
+	push		OFFSET unsortedHeader
+	call		printMssg
+
+	push		OFFSET space			;print array
 	push		OFFSET arr
 	push		arr_size
 	call		printArr
