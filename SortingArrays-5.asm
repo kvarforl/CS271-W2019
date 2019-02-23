@@ -46,13 +46,28 @@ main PROC
 	push		arr_size
 	call		fillArr
 
-	push		OFFSET unsortedHeader
+	push		OFFSET unsortedHeader	;print  unsorted array
 	call		printMssg
 
-	push		OFFSET space			;print array
+	push		OFFSET space			
 	push		OFFSET arr
 	push		arr_size
 	call		printArr
+
+	;SORT ARRAY
+	push		OFFSET arr
+	push		arr_size
+	call		sortArr
+
+
+	push		OFFSET sortedHeader	;print  sorted array
+	call		printMssg
+
+	push		OFFSET space			
+	push		OFFSET arr
+	push		arr_size
+	call		printArr
+
 
     push        OFFSET bye
     call        printMssg               ;pass in bye message
@@ -174,5 +189,49 @@ bottom:
 	pop		ebp
 	ret		8
 printArr ENDP
+
+;--------------------------------
+;Preconditions:params are pushed in order of OFFSET arr, arr_size
+;PostConditions: 
+;Description: 
+;Dependencies: 
+;--------------------------------
+sortArr PROC
+	push	ebp						;create stack frame
+	mov		ebp, esp
+	mov		ecx, [ebp+8]			;move arr_size into outer loop counter
+	dec		ecx						;decrement ecx to keep from seg faulting (set outer loop counter to size-1)
+	mov		esi, [ebp+12]			;move address of first arr element into esi
+
+	mov		edi, esi
+	sub		edi, 4					;set edi to 4 bytes before first elem; will be incremented to first elem in loop
+top_outer:
+	add		edi,4
+	mov		esi, edi				;set esi to point to the same addr as esi
+	push	ecx
+
+	mov		ecx, [ebp+8]			;set inner loop counter to be size-1
+	dec		ecx
+top_inner:
+	add		esi, 4
+
+	mov		ebx, [edi]			;compare base element to other element
+	mov		edx, [esi]
+	cmp		ebx,edx				
+	jg		dont_swap			;don't swap if val edi (ebx) is already > val esi (edx)
+
+	push	[edi]				;use the stack to swap elements
+	push	[esi]
+	pop		[edi]
+	pop		[esi]
+
+dont_swap:
+	loop	top_inner
+	pop		ecx
+	loop	top_outer
+
+	pop		ebp
+	ret		8
+sortArr ENDP
 
 END main
