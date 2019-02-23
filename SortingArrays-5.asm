@@ -8,6 +8,13 @@ INCLUDE Irvine32.inc
 
 .data
 
+min_size	    EQU	        10	
+max_size        EQU         200      
+low_bound       EQU         100
+high_bound      EQU         999
+
+range			EQU			high_bound-low_bound+1
+
 introHeader		BYTE		"Lindsey Kvarfordt",10,"--Sorting Arrays--",10,"This program will sort and print an integer array of user defined size, along with the median.",10,"**EC: ",0
 bye     		BYTE		"Goodbye! ",0
 intPrompt		BYTE		"Please enter an integer between 10 and 200 for the size of your array: ",0
@@ -21,13 +28,12 @@ space			BYTE		9,0                         ;use a tab for prettier spacing
 arr             DWORD       max_size dup(?)
 arr_size        DWORD       ?
 
-min_size	    EQU	        10	
-max_size        EQU         200      
-low_bound       EQU         100
-high_bound      EQU         999
+
 .code
 
 main PROC
+	call		Randomize				;Seed random number generator
+
     push        OFFSET introHeader      ;pass introHeader by reference
     call        printMssg        
 
@@ -35,6 +41,15 @@ main PROC
 	push		OFFSET intPrompt
     push        OFFSET arr_size
     call        getUserData
+
+	push		OFFSET arr
+	push		arr_size
+	call		fillArr
+
+	push		OFFSET space
+	push		OFFSET arr
+	push		arr_size
+	call		printArr
 
     push        OFFSET bye
     call        printMssg               ;pass in bye message
@@ -97,30 +112,64 @@ bottom:
 getUserData ENDP
 
 ;--------------------------------
-;Preconditions:
+;Preconditions: Arr size must not be 0
 ;PostConditions: 
 ;Description: Procedure is based on example from pg 297 of textbook
 ;Dependencies: 
 ;--------------------------------
 fillArr PROC    
-    push    ebp                     ;create stack frame
-    mov     ebp, esp
-    pushad                          ;save all registers
+    push    ebp							;create stack frame
+    mov     ebp, esp 
+    ;pushad								;save all registers
 
-    mov     esi, [ebp+12]           ;store address of first arr elem in esi
-    mov     ecx, [ebp+8]            ;store array size in loop counter
+    mov     esi, [ebp+12]				;store address of first arr elem in esi
+    mov     ecx, [ebp+8]				;store array size in loop counter
 
-    cmp     ecx,0
-    je      bottom                  ;If counter is zero, skip first loop
 first_loop:
-    mov     eax, high_bound         ;SETS UPPER BOUND (need to set lower; search for RandomRange documentation)
+    mov     eax, range					;generates number to upper bound
     call    RandomRange
-    mov     [esi], ax               ;put random num into arr at esi
-    add     esi, 4                  ;increment iterator (esi)
+	add		eax, low_bound				;shifts number into desired range
+    mov     [esi], eax					;put random num into arr at esi
+    add     esi, 4						;increment iterator (esi)
     loop    first_loop
-bottom:
+
     pop     ebp
     ret     8
 fillArr ENDP
+
+
+;--------------------------------
+;Preconditions: Parameters pushed in order of space, OFFSET arr, arr_size
+;PostConditions: Contents of memory from OFFSET arr to OFFSET arr +(arr_size*4) are printed with space as a separating character
+;Description: Prints the contents of an array
+;Dependencies: EXC, ESI, EBP, WRITEDEC, WRITESTRING
+;--------------------------------
+printArr PROC
+	push	ebp						;create stack frame
+	mov		ebp, esp
+	mov		ecx, [ebp+8]			;move arr_size into loop counter
+	mov		esi, [ebp+12]			;move address of first arr element into esi
+top:
+	mov		eax, ecx				;check if newline is needed
+	cdq
+	mov		ebx, 10
+	div		ebx
+	cmp		edx, 0					;if loop_counter%10 is zero, print a newline
+	jne		no_newline
+	call	CrLf
+no_newline:
+	mov		eax, [esi]				;move value of iter pointer (esi) to eax
+	call	WriteDec		
+	
+	mov		edx, [ebp+16]			;print a tab as a space
+	call	WriteString
+	
+	add		esi, 4					;increment iterator
+	loop	top
+bottom:
+	call	CrLf
+	pop		ebp
+	ret		8
+printArr ENDP
 
 END main
