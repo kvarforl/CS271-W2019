@@ -24,6 +24,12 @@ arr_size        EQU         15
 
 max_input	    EQU	        2147483647
 
+
+test_input      BYTE        "5678"
+test_input1     BYTE        "56a"
+test_result1    DWORD       ?
+test_result     DWORD       ?
+
 ;--------------------------------
 Writes a string to standard out.
 Params: name of string to be printed
@@ -53,11 +59,54 @@ getString MACRO prompt, storage_var
     pop         ecx
 ENDM
 
+;--------------------------------
+Computes base^ exponent and leaves answer in eax
+Params: base, exponent
+;--------------------------------
+power MACRO base, exponent
+    push    ecx
+    push    edx     ;might be altered to hold overflow of addition
+
+    mov     ecx, exponent
+    mov     eax, base
+    cmp     ecx, 0
+    je      zero
+LOCAL L1:
+    mul     eax, eax
+    loop    L1
+    jmp     bottom
+LOCAL zero:
+    mov     eax, 1
+LOCAL bottom:
+    pop     edx
+    pop     ecx
+ENDM
 
 .code
 
 main PROC
-    displayString       introHeader     
+    displayString       introHeader
+
+    ;****TEST POWER MACRO****
+    power   10,0
+    call    WriteDec ;EXPECT 1
+    call    CrLf
+    power   10,3
+    call    WriteDec ;EXPECT 1000
+
+    ;****TEST VALIDATE STRING****
+    push    test_input
+    push    OFFSET test_result
+    call    validateString
+    mov     eax, test_result
+    call    WriteDec                ;EXPECT 5678
+    call    CrLf
+    push    test_input1
+    push    OFFSET test_result1
+    call    validateString
+    mov     eax, test_result1       ;EXPECT 0
+    call    WriteDec
+    call    CrLf
 
 main ENDP
 
@@ -92,7 +141,7 @@ getData ENDP
 ;Dependencies: 
 ;--------------------------------
 validateString PROC
-    ;PUSH USED REGISTERS
+    pushad
     push    ebp
     mov     ebp, esp
 
@@ -113,10 +162,18 @@ charCheck:
     mov     ebx, 0                  ;use ebx as a power index
     std                             ;set direction flag to backwards
 charConvert:                        ;num_result = (char_ascii - 48) *10^index power
-    ;DO MATH HERE  ;PUSH USED REGISTERS
+    ;DO MATH HERE  
+    lodsb
+    sub     AL, 48
+    power   10, ebx
+    mul     AL                      ;multiply AL (has subtracted ascii val) by EAX(from power macro)
+
+    add     eax, num_result         ;num_result += contents of eax
+    mov     num_result, eax
+
     inc     ebx
-    loop    charCo ;PUSH USED REGISTERS
-    jmp     bottom ;PUSH USED REGISTERS
+    loop    charConvert 
+    jmp     bottom 
 
 invalidChar:
     mov     [edi], -1               ;set num_result to -1 and exit
@@ -124,7 +181,7 @@ invalidChar:
 
 bottom:
     pop     ebp
-    ;POP USED REGISTERS
+    popad
     ret     12
 validateString ENDP
 
