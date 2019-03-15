@@ -80,7 +80,7 @@ results			BYTE		"-----RESULTS-----",0
 arrayHeader     BYTE        "Your numbers: ",0
 medianHeader    BYTE        "Sum: ",0
 averageHeader   BYTE        "Average: ",0
-errorMssg		BYTE		"ERROR! Try again."
+errorMssg		BYTE		"ERROR! Try again.",0
 temp_input      BYTE        ?
 num_result      DWORD       ?
 space			BYTE		9,0                         ;use a tab for prettier spacing
@@ -88,8 +88,8 @@ space			BYTE		9,0                         ;use a tab for prettier spacing
 num_arr         DWORD       arr_size dup(15)
 arr_size        EQU         15
 
-test_input      BYTE        "5678"
-test_input1     BYTE        "56a"
+test_input      BYTE        "5678",0
+test_input1     BYTE        "56a",0
 test_result1    DWORD       ?
 test_result     DWORD       ?
 
@@ -157,7 +157,9 @@ validateString PROC
 
     mov     edi, [ebp+12]           ;set edi (dest pointer) to addr of num_result
     mov     esi, [ebp+8]            ;set esi (source pointer) to addr of temp_input string
-    mov     ecx, LENGTHOF [esi]     ;set ecx to length of temp_input
+
+	;PASS LENGTHOF TEMP_INPUT SEPARATELY
+    mov     ecx, LENGTHOF		    ;set ecx to length of temp_input
 
     cld                             ;set direction to FORWARD
 charCheck:
@@ -186,6 +188,7 @@ charConvert:                        ;num_result = (char_ascii - 48) *10^index po
     jmp     bottom 
 
 invalidChar:
+	;CAN'T USE EDI DIRECTLY
     mov     [edi], -1               ;set num_result to -1 and exit
     jmp     bottom
 
