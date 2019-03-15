@@ -41,18 +41,23 @@ ENDM
 ;Params: base, exponent
 ;--------------------------------
 power MACRO base, exponent
-LOCAL	L1
-LOCAL	zero
-LOCAL	bottom
+	LOCAL	L1
+	LOCAL	zero
+	LOCAL	bottom
     push    ecx
     push    edx     ;might be altered to hold overflow of addition
 
+
+
     mov     ecx, exponent
+	
     mov     eax, base
     cmp     ecx, 0
     je      zero
+	dec		ecx
 L1:
-    mul     eax, eax
+	mov		ebx, base
+	mul		ebx
     loop    L1
     jmp     bottom
 zero:
@@ -60,6 +65,7 @@ zero:
 bottom:
     pop     edx
     pop     ecx
+
 ENDM
 
 
@@ -99,13 +105,13 @@ main PROC
     call    WriteDec ;EXPECT 1000
 
     ;****TEST VALIDATE STRING****
-    push    test_input
+    push    OFFSET test_input
     push    OFFSET test_result
     call    validateString
     mov     eax, test_result
     call    WriteDec                ;EXPECT 5678
     call    CrLf
-    push    test_input1
+    push    OFFSET test_input1
     push    OFFSET test_result1
     call    validateString
     mov     eax, test_result1       ;EXPECT 0
@@ -128,7 +134,7 @@ getData PROC
     mov         ecx, 10                 ;get 10 ints fromuser
 promptUser:
     getString   intPrompt, temp_input   ;PASS EVERYTHING AS PARAMS!
-    push        temp_input
+    push        OFFSET temp_input
     push        OFFSET num_result       ;num_result will contain the numeric form of the string or -1 if NAN
     call        validateString  
     ;if num_result == -1, print errorMssg and jmp without decrementing
