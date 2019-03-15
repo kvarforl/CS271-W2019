@@ -136,6 +136,7 @@ promptUser:
     getString   intPrompt, temp_input   ;PASS EVERYTHING AS PARAMS!
     push        OFFSET temp_input
     push        OFFSET num_result       ;num_result will contain the numeric form of the string or -1 if NAN
+    push        LENGTHOF temp_input
     call        validateString  
     ;if num_result == -1, print errorMssg and jmp without decrementing
     ;else append num_result to num_arr and loop
@@ -155,11 +156,12 @@ validateString PROC
     push    ebp
     mov     ebp, esp
 
+
     mov     edi, [ebp+12]           ;set edi (dest pointer) to addr of num_result
     mov     esi, [ebp+8]            ;set esi (source pointer) to addr of temp_input string
 
 	;PASS LENGTHOF TEMP_INPUT SEPARATELY
-    mov     ecx, LENGTHOF		    ;set ecx to length of temp_input
+    mov     ecx, [ebp+16]	    ;set ecx to length of temp_input
 
     cld                             ;set direction to FORWARD
 charCheck:
@@ -170,7 +172,7 @@ charCheck:
     jge     invalidChar
     loop    charCheck               ;after this line, entire string is valid chars and esi is at end
 
-    mov     ecx, LENGTHOF [esi]     ;reset ecx to size of string
+    mov     ecx, [ebp+16]           ;reset ecx to size of string
     mov     ebx, 0                  ;use ebx as a power index
     std                             ;set direction flag to backwards
 charConvert:                        ;num_result = (char_ascii - 48) *10^index power
@@ -189,13 +191,14 @@ charConvert:                        ;num_result = (char_ascii - 48) *10^index po
 
 invalidChar:
 	;CAN'T USE EDI DIRECTLY
-    mov     [edi], -1               ;set num_result to -1 and exit
+    mov     ebx, edi
+    mov     [ebx], -1               ;set num_result to -1 and exit
     jmp     bottom
 
 bottom:
     pop     ebp
     popad
-    ret     12
+    ret     16
 validateString ENDP
 
 END main
