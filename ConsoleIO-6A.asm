@@ -13,7 +13,7 @@ INCLUDE Irvine32.inc
 ;--------------------------------
 displayString MACRO string
     push        edx
-    mov         edx, OFFSET string
+    mov         edx, string
     call        WriteString
     call        CrLf 
     pop         edx
@@ -95,28 +95,31 @@ test_result     DWORD       ?
 
 .code
 main PROC
-	displayString       introHeader
+	;displayString       OFFSET introHeader
+
+	mov		edx, OFFSET introHeader
+	call	WriteString
 
     ;****TEST POWER MACRO****
-    power   10,0
-    call    WriteDec ;EXPECT 1
-    call    CrLf
-    power   10,3
-    call    WriteDec ;EXPECT 1000
+    ;power   10,0
+    ;call    WriteDec ;EXPECT 1
+    ;call    CrLf
+    ;power   10,3
+    ;call    WriteDec ;EXPECT 1000
 
     ;****TEST VALIDATE STRING****
-    push    OFFSET test_input
-    push    OFFSET test_result
-    call    validateString
-    mov     eax, test_result
-    call    WriteDec                ;EXPECT 5678
-    call    CrLf
-    push    OFFSET test_input1
-    push    OFFSET test_result1
-    call    validateString
-    mov     eax, test_result1       ;EXPECT 0
-    call    WriteDec
-    call    CrLf
+    ;push    OFFSET test_input
+    ;push    OFFSET test_result
+    ;call    validateString
+    ;mov     eax, test_result
+    ;call    WriteDec                ;EXPECT 5678
+    ;call    CrLf
+    ;push    OFFSET test_input1
+    ;push    OFFSET test_result1
+    ;call    validateString
+    ;mov     eax, test_result1       ;EXPECT 0
+    ;call    WriteDec
+    ;call    CrLf
 
 	exit	; exit to operating system
 main ENDP
@@ -192,7 +195,8 @@ charConvert:                        ;num_result = (char_ascii - 48) *10^index po
 invalidChar:
 	;CAN'T USE EDI DIRECTLY
     mov     ebx, edi
-    mov     [ebx], -1               ;set num_result to -1 and exit
+	mov		eax, -1
+    mov     [ebx], eax               ;set num_result to -1 and exit
     jmp     bottom
 
 bottom:
