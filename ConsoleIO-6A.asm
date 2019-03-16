@@ -30,13 +30,12 @@ getString MACRO prompt, storage_var
 
     mov         edx, OFFSET storage_var
     mov         ecx, SIZEOF storage_var
-	dec			ecx
     call        ReadString
     pop         edx
     pop         ecx
 ENDM
 
-arr_size        EQU         15
+arr_size        EQU         10
 max_input	    EQU	        2147483647
 
 .data
@@ -65,6 +64,7 @@ main PROC
 	displayString       OFFSET introHeader
 
 	call	getData
+
 	exit	; exit to operating system
 main ENDP
 
@@ -78,28 +78,26 @@ getData PROC
     push        ebp                     ;create stack frame
     mov         ebp, esp
 
-    mov         ecx, 10                 ;get 10 ints fromuser
+    mov         ecx, arr_size           ;get 10 ints fromuser
+	dec			ecx
 promptUser:
     getString   intPrompt, temp_input   ;PASS EVERYTHING AS PARAMS!
 	push		OFFSET errorFlag
 	push		OFFSET num_result
     push        OFFSET temp_input
     call        validateString
-	
-	mov			eax, errorFlag
-	call		WriteDec
-	call		Crlf
-
 	cmp			errorFlag, 1
 	je			err
 	;APPEND NUM_RES TO NUM_ARR
 	loop		promptUser
+	jmp			bottom
 err:	
 	mov			edx, OFFSET errorMssg
 	call		WriteString
 	call		crlf
 	jmp			promptUser
-    
+
+bottom:
     pop         ebp
 	ret         
 getData ENDP
@@ -161,7 +159,7 @@ invalidChar:
 bottom:
 	popad
     pop     ebp
-    ret     20
+    ret     16
 validateString ENDP
 
 END main
