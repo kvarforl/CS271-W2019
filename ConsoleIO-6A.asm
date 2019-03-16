@@ -35,39 +35,6 @@ getString MACRO prompt, storage_var
     pop         ecx
 ENDM
 
-;--------------------------------
-;Computes base^ exponent and leaves answer in eax
-;Params: base, exponent
-;--------------------------------
-power MACRO base, exponent
-	LOCAL	L1
-	LOCAL	zero
-	LOCAL	bottom
-    push    ecx
-    push    edx     ;might be altered to hold overflow of addition
-
-
-
-    mov     ecx, exponent
-	
-    mov     eax, base
-    cmp     ecx, 0
-    je      zero
-	dec		ecx
-L1:
-	mov		ebx, base
-	mul		ebx
-    loop    L1
-    jmp     bottom
-zero:
-    mov     eax, 1
-bottom:
-    pop     edx
-    pop     ecx
-
-ENDM
-
-
 arr_size        EQU         15
 max_input	    EQU	        2147483647
 
@@ -83,6 +50,7 @@ errorMssg		BYTE		"ERROR! Try again.",0
 temp_input      BYTE        ?
 num_result      DWORD       ?
 space			BYTE		9,0                         ;use a tab for prettier spacing
+errorFlag		DWORD		0							;0 means no error; 1 means error
 
 num_arr         DWORD       arr_size dup(15)
 
@@ -95,16 +63,7 @@ test_result     DWORD       ?
 main PROC
 	displayString       OFFSET introHeader
 
-	mov		eax, test_result
-	call	WriteDec
-	call	CrLf
-
-	push	LENGTHOF test_input
-	push	OFFSET	test_result
-	push	OFFSET test_input
-	call	validateString
-	mov		eax, test_result
-	call	WriteDec
+	call	getData
 	exit	; exit to operating system
 main ENDP
 
@@ -121,15 +80,28 @@ getData PROC
     mov         ecx, 10                 ;get 10 ints fromuser
 promptUser:
     getString   intPrompt, temp_input   ;PASS EVERYTHING AS PARAMS!
+	push		OFFSET errorFlag
+	push		LENGTHOF temp_input
+	push		OFFSET num_result
     push        OFFSET temp_input
-    push        OFFSET num_result       ;num_result will contain the numeric form of the string or -1 if NAN
-    push        LENGTHOF temp_input
-    call        validateString  
-    ;if num_result == -1, print errorMssg and jmp without decrementing
-    ;else append num_result to num_arr and loop
+    call        validateString
 	
+	mov			eax, errorFlag
+	call		WriteDec
+	call		Crlf
+
+	cmp			errorFlag, 1
+	je			err
+	;APPEND NUM_RES TO NUM_ARR
+	loop		promptUser
+err:	
+	mov			edx, OFFSET errorMssg
+	call		WriteString
+	call		crlf
+	jmp			promptUser
+    
     pop         ebp
-	ret         4
+	ret         
 getData ENDP
 
 ;--------------------------------
@@ -142,7 +114,8 @@ validateString PROC
     push    ebp
     mov     ebp, esp
 	pushad
-                                    ;PUSH LENGTH | PUSH OFFSET num_result | PUSH OFFSET temp_input
+                                    ;PUSH OFFSET errorFlag | PUSH LENGTH | PUSH OFFSET num_result | PUSH OFFSET temp_input
+																			
     mov     ecx, [ebp+16]	        ;set ecx to length of temp_input
 	dec		ecx
     mov     edi, [ebp+12]           ;set edi (dest pointer) to addr of num_result
@@ -152,10 +125,14 @@ validateString PROC
 charCheck:
     lodsb                           ;load first char into AL
     cmp     AL, 48                  ;compare to '0'
-    jle     invalidChar
+    jl     invalidChar
     cmp     AL, 57                  ;compare to '9'
-    jge     invalidChar
+    jg     invalidChar
     loop    charCheck               ;after this line, entire string is valid chars and esi is at end
+
+	mov		ecx, [ebp+20]			;set error flag to 0 
+	mov		esi, 0
+	mov		[ecx],esi 
 
     mov     ecx, [ebp+16]           ;reset ecx to length of string
 	dec		ecx
@@ -163,6 +140,7 @@ charCheck:
 	mov		esi, [ebp+8]
 	mov		ebx, 0
 	mov		[edi], ebx
+
 
 charConvert:                        ;num_result = (char_ascii - 48) *10^index power  
     mov		ebx, [edi]
@@ -175,14 +153,15 @@ charConvert:                        ;num_result = (char_ascii - 48) *10^index po
     jmp     bottom 
 
 invalidChar:
-	mov		eax, -1
-    mov     [edi], eax               ;set num_result to -1 and exit
+	mov		eax, [ebp+20]
+	mov		esi, 1
+	mov		[eax], esi
     jmp     bottom
 
 bottom:
 	popad
     pop     ebp
-    ret     16
+    ret     20
 validateString ENDP
 
 END main
