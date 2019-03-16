@@ -86,7 +86,6 @@ num_result      DWORD       ?
 space			BYTE		9,0                         ;use a tab for prettier spacing
 
 num_arr         DWORD       arr_size dup(15)
-arr_size        EQU         15
 
 test_input      BYTE        "5678",0
 test_input1     BYTE        "56a",0
@@ -96,30 +95,6 @@ test_result     DWORD       ?
 .code
 main PROC
 	;displayString       OFFSET introHeader
-
-	mov		edx, OFFSET introHeader
-	call	WriteString
-
-    ;****TEST POWER MACRO****
-    ;power   10,0
-    ;call    WriteDec ;EXPECT 1
-    ;call    CrLf
-    ;power   10,3
-    ;call    WriteDec ;EXPECT 1000
-
-    ;****TEST VALIDATE STRING****
-    ;push    OFFSET test_input
-    ;push    OFFSET test_result
-    ;call    validateString
-    ;mov     eax, test_result
-    ;call    WriteDec                ;EXPECT 5678
-    ;call    CrLf
-    ;push    OFFSET test_input1
-    ;push    OFFSET test_result1
-    ;call    validateString
-    ;mov     eax, test_result1       ;EXPECT 0
-    ;call    WriteDec
-    ;call    CrLf
 
 	exit	; exit to operating system
 main ENDP
