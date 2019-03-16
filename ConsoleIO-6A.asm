@@ -1,4 +1,3 @@
-
 TITLE Console IO (ConsoleIO-6A.asm)
 
 ; Author: Lindsey Kvarfordt
@@ -94,8 +93,18 @@ test_result     DWORD       ?
 
 .code
 main PROC
-	;displayString       OFFSET introHeader
+	displayString       OFFSET introHeader
 
+	mov		eax, test_result
+	call	WriteDec
+	call	CrLf
+
+	push	LENGTHOF test_input
+	push	OFFSET	test_result
+	push	OFFSET test_input
+	call	validateString
+	mov		eax, test_result
+	call	WriteDec
 	exit	; exit to operating system
 main ENDP
 
@@ -130,11 +139,12 @@ getData ENDP
 ;Dependencies: 
 ;--------------------------------
 validateString PROC
-    pushad
     push    ebp
     mov     ebp, esp
+	pushad
                                     ;PUSH LENGTH | PUSH OFFSET num_result | PUSH OFFSET temp_input
     mov     ecx, [ebp+16]	        ;set ecx to length of temp_input
+	dec		ecx
     mov     edi, [ebp+12]           ;set edi (dest pointer) to addr of num_result
     mov     esi, [ebp+8]            ;set esi (source pointer) to addr of temp_input string
 
@@ -148,19 +158,19 @@ charCheck:
     loop    charCheck               ;after this line, entire string is valid chars and esi is at end
 
     mov     ecx, [ebp+16]           ;reset ecx to length of string
-    mov     ebx, 0                  ;use ebx as a power index
-    std                             ;set direction flag to backwards
-    mov     [edi],0                 ;make sure num_result starts at 0
+	dec		ecx
+    
+	mov		esi, [ebp+8]
+	mov		ebx, 0
+	mov		[edi], ebx
+
 charConvert:                        ;num_result = (char_ascii - 48) *10^index power  
-    lodsb
-    sub     AL, 48                  ;AL = AL- 48
-    power   10, ebx                 ;eax = 10^ebx
-    mul     AL                      ;eax = AL * eax > (al -48)* 10^ebx
-
-    add     eax, [edi]              ;num_result += contents of eax
-    mov     [edi], eax
-
-    inc     ebx
+    mov		ebx, [edi]
+	imul	ebx, 10
+	mov		[edi],ebx
+	lodsb
+	sub		AL, '0'
+	add		[edi],eax
     loop    charConvert 
     jmp     bottom 
 
@@ -170,8 +180,8 @@ invalidChar:
     jmp     bottom
 
 bottom:
+	popad
     pop     ebp
-    popad
     ret     16
 validateString ENDP
 
