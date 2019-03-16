@@ -30,6 +30,7 @@ getString MACRO prompt, storage_var
 
     mov         edx, OFFSET storage_var
     mov         ecx, SIZEOF storage_var
+	dec			ecx
     call        ReadString
     pop         edx
     pop         ecx
@@ -47,7 +48,7 @@ arrayHeader     BYTE        "Your numbers: ",0
 medianHeader    BYTE        "Sum: ",0
 averageHeader   BYTE        "Average: ",0
 errorMssg		BYTE		"ERROR! Try again.",0
-temp_input      BYTE        ?
+temp_input      BYTE        81 dup(?)
 num_result      DWORD       ?
 space			BYTE		9,0                         ;use a tab for prettier spacing
 errorFlag		DWORD		0							;0 means no error; 1 means error
@@ -81,7 +82,6 @@ getData PROC
 promptUser:
     getString   intPrompt, temp_input   ;PASS EVERYTHING AS PARAMS!
 	push		OFFSET errorFlag
-	push		LENGTHOF temp_input
 	push		OFFSET num_result
     push        OFFSET temp_input
     call        validateString
@@ -114,28 +114,26 @@ validateString PROC
     push    ebp
     mov     ebp, esp
 	pushad
-                                    ;PUSH OFFSET errorFlag | PUSH LENGTH | PUSH OFFSET num_result | PUSH OFFSET temp_input
+                                    ;PUSH OFFSET errorFlag | PUSH OFFSET num_result | PUSH OFFSET temp_input
 																			
-    mov     ecx, [ebp+16]	        ;set ecx to length of temp_input
-	dec		ecx
     mov     edi, [ebp+12]           ;set edi (dest pointer) to addr of num_result
     mov     esi, [ebp+8]            ;set esi (source pointer) to addr of temp_input string
 
     cld                             ;set direction to FORWARD
 charCheck:
     lodsb                           ;load first char into AL
+	cmp		AL, 0
+	je		stringGood
     cmp     AL, 48                  ;compare to '0'
     jl     invalidChar
     cmp     AL, 57                  ;compare to '9'
     jg     invalidChar
-    loop    charCheck               ;after this line, entire string is valid chars and esi is at end
-
-	mov		ecx, [ebp+20]			;set error flag to 0 
+    jmp charCheck               ;after this line, entire string is valid chars and esi is at end
+stringGood:
+	mov		ecx, [ebp+16]			;set error flag to 0 
 	mov		esi, 0
 	mov		[ecx],esi 
 
-    mov     ecx, [ebp+16]           ;reset ecx to length of string
-	dec		ecx
     
 	mov		esi, [ebp+8]
 	mov		ebx, 0
@@ -147,13 +145,15 @@ charConvert:                        ;num_result = (char_ascii - 48) *10^index po
 	imul	ebx, 10
 	mov		[edi],ebx
 	lodsb
+	cmp		AL, 0
+	je		bottom
 	sub		AL, '0'
 	add		[edi],eax
-    loop    charConvert 
+    jmp  charConvert 
     jmp     bottom 
 
 invalidChar:
-	mov		eax, [ebp+20]
+	mov		eax, [ebp+16]
 	mov		esi, 1
 	mov		[eax], esi
     jmp     bottom
