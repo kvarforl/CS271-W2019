@@ -133,45 +133,40 @@ validateString PROC
     pushad
     push    ebp
     mov     ebp, esp
-
-
+                                    ;PUSH LENGTH | PUSH OFFSET num_result | PUSH OFFSET temp_input
+    mov     ecx, [ebp+16]	        ;set ecx to length of temp_input
     mov     edi, [ebp+12]           ;set edi (dest pointer) to addr of num_result
     mov     esi, [ebp+8]            ;set esi (source pointer) to addr of temp_input string
-
-	;PASS LENGTHOF TEMP_INPUT SEPARATELY
-    mov     ecx, [ebp+16]	    ;set ecx to length of temp_input
 
     cld                             ;set direction to FORWARD
 charCheck:
     lodsb                           ;load first char into AL
-    cmp     AL, 48
+    cmp     AL, 48                  ;compare to '0'
     jle     invalidChar
-    cmp     AL, 57
+    cmp     AL, 57                  ;compare to '9'
     jge     invalidChar
     loop    charCheck               ;after this line, entire string is valid chars and esi is at end
 
-    mov     ecx, [ebp+16]           ;reset ecx to size of string
+    mov     ecx, [ebp+16]           ;reset ecx to length of string
     mov     ebx, 0                  ;use ebx as a power index
     std                             ;set direction flag to backwards
-charConvert:                        ;num_result = (char_ascii - 48) *10^index power
-    ;DO MATH HERE  
+    mov     [edi],0                 ;make sure num_result starts at 0
+charConvert:                        ;num_result = (char_ascii - 48) *10^index power  
     lodsb
-    sub     AL, 48
-    power   10, ebx
-    mul     AL                      ;multiply AL (has subtracted ascii val) by EAX(from power macro)
+    sub     AL, 48                  ;AL = AL- 48
+    power   10, ebx                 ;eax = 10^ebx
+    mul     AL                      ;eax = AL * eax > (al -48)* 10^ebx
 
-    add     eax, num_result         ;num_result += contents of eax
-    mov     num_result, eax
+    add     eax, [edi]              ;num_result += contents of eax
+    mov     [edi], eax
 
     inc     ebx
     loop    charConvert 
     jmp     bottom 
 
 invalidChar:
-	;CAN'T USE EDI DIRECTLY
-    mov     ebx, edi
 	mov		eax, -1
-    mov     [ebx], eax               ;set num_result to -1 and exit
+    mov     [edi], eax               ;set num_result to -1 and exit
     jmp     bottom
 
 bottom:
