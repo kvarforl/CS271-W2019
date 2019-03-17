@@ -159,7 +159,7 @@ invalidChar:
 bottom:
 	popad
     pop     ebp
-    ret     16
+    ret     12
 validateString ENDP
 
 END main
