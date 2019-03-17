@@ -63,6 +63,7 @@ test_result     DWORD       ?
 main PROC
 	displayString       OFFSET introHeader
 
+	push	OFFSET num_arr
 	push	OFFSET errorFlag
 	push	OFFSET num_result
 	push	OFFSET temp_input
