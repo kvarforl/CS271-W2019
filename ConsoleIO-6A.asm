@@ -34,7 +34,7 @@ getString MACRO prompt, storage_var
     pop         ecx
 ENDM
 
-arr_size        EQU         10
+arr_size        EQU         11
 max_input	    EQU	        2147483647
 
 .data
@@ -43,7 +43,7 @@ introHeader		BYTE		"Lindsey Kvarfordt",10,"--Low Level I/O--",10,"This program w
 intPrompt		BYTE		"Please enter an unsigned integer: ",0
 results			BYTE		"-----RESULTS-----",0
 arrayHeader     BYTE        "Your numbers: ",0
-medianHeader    BYTE        "Sum: ",0
+sumHeader    BYTE        "Sum: ",0
 averageHeader   BYTE        "Average: ",0
 errorMssg		BYTE		"ERROR! Try again.",0
 temp_input      BYTE        81 dup(?)
@@ -51,6 +51,7 @@ num_result      DWORD       ?
 space			BYTE		9,0                         ;use a tab for prettier spacing
 errorFlag		DWORD		0							;0 means no error; 1 means error
 
+sum				DWORD		?
 num_arr         DWORD       arr_size dup(?)
 
 .code
@@ -63,20 +64,61 @@ main PROC
 	push	OFFSET temp_input
 	call	readVal
 
+	push	OFFSET space
 	push	OFFSET temp_input
 	push	OFFSET num_arr
 	push	OFFSET arrayHeader
 	call	printArr
 
+	push	OFFSET sumHeader
+	push	OFFSET temp_input
+	push	OFFSET sum
+	push	OFFSET num_arr
+	call	displaySum
 
 	exit	; exit to operating system
 main ENDP
 
 ;--------------------------------
-;Preconditions:	Push OFFSET storage_var, OFFSET arr., OFFSET arrHeader. arrsize is global constant
+;Preconditions:	push OFFSET sumHeader. OFFSET temp_input, OFFSET sum_storage, OFFSET arr 
 ;PostConditions: 
-;Description:
-;Dependencies: 
+;Description: 
+;Dependencies:
+;--------------------------------
+displaySum PROC
+	push	ebp
+	mov		ebp, esp
+	pushad
+
+	displayString [ebp+20]
+
+	mov		ecx, arr_size
+	dec		ecx
+	mov		esi, [ebp+8]			;set esi to front of arr
+
+	mov		eax, 0					;initialize eax to 0
+top:
+	add		eax, [esi]
+	add		esi, 4
+	loop	top
+
+	mov		ebx, [ebp+12]			;store val of eax in sum_storage
+	mov		[ebx], eax
+
+	push	[ebp+12]
+	push	[ebp+16]
+	call	WriteVal
+	call	CrLf
+	popad
+	pop		ebp
+	ret		16
+displaySum ENDP
+
+;--------------------------------
+;Preconditions:	Push OFFSET space, OFFSET storage_var, OFFSET arr., OFFSET arrHeader. arrsize is global constant
+;PostConditions: Array is printed to screen
+;Description: Prints an array
+;Dependencies: displayString, writeVal
 ;--------------------------------
 printArr PROC
 	push	ebp
@@ -84,6 +126,7 @@ printArr PROC
 	pushad
 	mov		esi, [ebp+12]		;set esi to front of numeric array
 	displayString [ebp+8]		;display array header
+	call	crlf
 	mov		ecx, arr_size
 	dec		ecx
 
@@ -91,12 +134,15 @@ top:
 	push	esi
 	push	[ebp+16]
 	call	writeVal
+	displayString [ebp+20]
 	add		esi, 4
 	loop	top
 
+	call	crlf
+
 	popad
 	pop		ebp
-	ret		12
+	ret		16
 printArr ENDP
 
 
@@ -265,5 +311,3 @@ bottom:
 validateString ENDP
 
 END main
-
-
