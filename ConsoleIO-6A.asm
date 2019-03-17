@@ -63,20 +63,86 @@ test_result     DWORD       ?
 main PROC
 	displayString       OFFSET introHeader
 
-	push	OFFSET num_arr
-	push	OFFSET errorFlag
+	;push	OFFSET num_arr
+	;push	OFFSET errorFlag
+	;push	OFFSET num_result
+	;push	OFFSET temp_input
+	;call	readVal
+
+	mov		num_result, 1234567890
 	push	OFFSET num_result
 	push	OFFSET temp_input
-	call	readVal
+	call	WriteVal
+
 
 	exit	; exit to operating system
 main ENDP
 
 ;--------------------------------
-;Preconditions:
-;PostConditions: 
-;Description: 
+;Preconditions:	push params in order OFFSET NUM, OFFSET storage_var. Storage var must be at least 11 bytes	
+;PostConditions:
+;Description:
 ;Dependencies: 
+;--------------------------------
+writeVal PROC
+	push	ebp
+	mov		ebp,esp
+
+	;mov		edi, [ebp+8]			;fill first 21 bytes of storage val with \0
+	mov		edi, OFFSET temp_input
+	mov		al, 0
+	mov		ecx, 21
+	cld
+	rep		stosb
+
+	dec		edi						;keep a null terminator
+	std								;set direction to go backwards
+	
+	;mov		ebx, [ebp+12]			;initialize eax to num
+	;mov		eax, [ebx]
+	mov		eax, num_result
+top:
+	mov		ebx, 0
+	cmp		eax, ebx
+	je		start_shift
+		
+	cdq								;divide eax by 10 until quotient is 0. 
+	mov		ebx, 10
+	div		ebx
+
+	push	eax						;store remainder at end of string
+	add		edx, '0'
+	mov		eax, edx
+	stosb
+	pop		eax
+	jmp		top
+
+start_shift:
+	cld
+	mov		esi, edi				;move  string to the front of the storage variable
+	inc		esi
+	;mov		edi, [ebp+8]
+	mov		edi, OFFSET temp_input
+shift:
+	mov		ebx, 0
+	cmp		[esi], ebx				;compare esi to null
+	je		bottom
+	lodsb
+	stosb
+	jmp		shift
+	jmp		bottom
+bottom:
+	;displayString	[ebp+8]
+	displayString	OFFSET temp_input
+	pop				ebp
+	ret				8
+writeVal ENDP
+
+;--------------------------------
+;Preconditions: Params are pushed in order OFFSET num_arr, OFFSET errorFlag, OFFSET num_result, OFFSET temp_input. Array size is a global constant
+;PostConditions: The array passed is filled with numeric user input
+;Description: Prompts user to provide valid integers until array is full
+;Dependencies: validateString
 ;--------------------------------
 readVal PROC   
     push        ebp                     ;create stack frame
@@ -111,14 +177,14 @@ err:
 
 bottom:
     pop         ebp
-	ret         
+	ret         16
 readVal ENDP
 
 ;--------------------------------
-;Preconditions:
-;PostConditions: num_result holds eithe numeric conversion or -1
-;Description: If parameter string is a number, convert and save in num_result. else set num_result to -1
-;Dependencies: 
+;Preconditions: Params have been pushed in order: OFFSET errorFlag | OFFSET num_result | OFFSET temp_input
+;PostConditions: num_result holds numeric conversion. Error flag is 0 if all good, 1 if error.
+;Description: If parameter string is a number, convert and save in num_result. Otherwise, sets error flag and exits
+;Dependencies: none
 ;--------------------------------
 validateString PROC
     push    ebp
@@ -176,3 +242,4 @@ bottom:
 validateString ENDP
 
 END main
+
