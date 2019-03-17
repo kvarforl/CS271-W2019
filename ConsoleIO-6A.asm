@@ -63,7 +63,10 @@ test_result     DWORD       ?
 main PROC
 	displayString       OFFSET introHeader
 
-	call	getData
+	push	OFFSET errorFlag
+	push	OFFSET num_result
+	push	OFFSET temp_input
+	call	readVal
 
 	exit	; exit to operating system
 main ENDP
@@ -74,21 +77,29 @@ main ENDP
 ;Description: 
 ;Dependencies: 
 ;--------------------------------
-getData PROC   
+readVal PROC   
     push        ebp                     ;create stack frame
     mov         ebp, esp
 
-    mov         ecx, arr_size           ;get 10 ints fromuser
+	mov			esi, [ebp+20]			;set ESI to the start of the array
+
+    mov         ecx, arr_size           ;get an arrays worth of ints fromuser
 	dec			ecx
 promptUser:
     getString   intPrompt, temp_input   ;PASS EVERYTHING AS PARAMS!
-	push		OFFSET errorFlag
-	push		OFFSET num_result
-    push        OFFSET temp_input
+	push		[ebp+16]				;OFFSET errorFlag
+	push		[ebp+12]				;OFFSET num_result
+    push        [ebp+8]					;OFFSET temp_input
     call        validateString
-	cmp			errorFlag, 1
+
+	mov			eax, [ebp+16]
+	mov			ebx, 1
+	cmp			[eax], ebx
 	je			err
-	;APPEND NUM_RES TO NUM_ARR
+
+	mov			eax, [ebp+12]
+	mov			[esi], eax				;APPEND NUM_RES TO NUM_ARR
+	add			esi, 4
 	loop		promptUser
 	jmp			bottom
 err:	
@@ -100,7 +111,7 @@ err:
 bottom:
     pop         ebp
 	ret         
-getData ENDP
+readVal ENDP
 
 ;--------------------------------
 ;Preconditions:
@@ -123,10 +134,10 @@ charCheck:
 	cmp		AL, 0
 	je		stringGood
     cmp     AL, 48                  ;compare to '0'
-    jl     invalidChar
+    jl		invalidChar
     cmp     AL, 57                  ;compare to '9'
-    jg     invalidChar
-    jmp charCheck               ;after this line, entire string is valid chars and esi is at end
+    jg		invalidChar
+    jmp		charCheck               ;after this line, entire string is valid chars and esi is at end
 stringGood:
 	mov		ecx, [ebp+16]			;set error flag to 0 
 	mov		esi, 0
@@ -139,15 +150,16 @@ stringGood:
 
 
 charConvert:                        ;num_result = (char_ascii - 48) *10^index power  
-    mov		ebx, [edi]
-	imul	ebx, 10
-	mov		[edi],ebx
+    
 	lodsb
 	cmp		AL, 0
 	je		bottom
 	sub		AL, '0'
+	mov		ebx, [edi]
+	imul	ebx, 10
+	mov		[edi],ebx
 	add		[edi],eax
-    jmp  charConvert 
+    jmp		charConvert
     jmp     bottom 
 
 invalidChar:
