@@ -14,7 +14,6 @@ displayString MACRO string
     push        edx
     mov         edx, string
     call        WriteString
-    call        CrLf 
     pop         edx
 ENDM
 
@@ -40,7 +39,7 @@ max_input	    EQU	        2147483647
 
 .data
 
-introHeader		BYTE		"Lindsey Kvarfordt",10,"--Low Level I/O--",10,"This program will calculate the sum and average of user provided values.",10,"Please provide 15 unsigned integers: make sure they are small enough to fit within a 32 bit register.",0
+introHeader		BYTE		"Lindsey Kvarfordt",10,"--Low Level I/O--",10,"This program will calculate the sum and average of user provided values.",10,"Please provide 15 unsigned integers: make sure they are small enough to fit within a 32 bit register.",10,0
 intPrompt		BYTE		"Please enter an unsigned integer: ",0
 results			BYTE		"-----RESULTS-----",0
 arrayHeader     BYTE        "Your numbers: ",0
@@ -52,44 +51,67 @@ num_result      DWORD       ?
 space			BYTE		9,0                         ;use a tab for prettier spacing
 errorFlag		DWORD		0							;0 means no error; 1 means error
 
-num_arr         DWORD       arr_size dup(15)
-
-test_input      BYTE        "5678",0
-test_input1     BYTE        "56a",0
-test_result1    DWORD       ?
-test_result     DWORD       ?
+num_arr         DWORD       arr_size dup(?)
 
 .code
 main PROC
 	displayString       OFFSET introHeader
 
-	;push	OFFSET num_arr
-	;push	OFFSET errorFlag
-	;push	OFFSET num_result
-	;push	OFFSET temp_input
-	;call	readVal
-
-	mov		num_result, 1234567890
+	push	OFFSET num_arr
+	push	OFFSET errorFlag
 	push	OFFSET num_result
 	push	OFFSET temp_input
-	call	WriteVal
+	call	readVal
+
+	push	OFFSET temp_input
+	push	OFFSET num_arr
+	push	OFFSET arrayHeader
+	call	printArr
 
 
 	exit	; exit to operating system
 main ENDP
 
 ;--------------------------------
-;Preconditions:	push params in order OFFSET NUM, OFFSET storage_var. Storage var must be at least 11 bytes	
-;PostConditions:
+;Preconditions:	Push OFFSET storage_var, OFFSET arr., OFFSET arrHeader. arrsize is global constant
+;PostConditions: 
 ;Description:
 ;Dependencies: 
+;--------------------------------
+printArr PROC
+	push	ebp
+	mov		ebp, esp
+	pushad
+	mov		esi, [ebp+12]		;set esi to front of numeric array
+	displayString [ebp+8]		;display array header
+	mov		ecx, arr_size
+	dec		ecx
+
+top:
+	push	esi
+	push	[ebp+16]
+	call	writeVal
+	add		esi, 4
+	loop	top
+
+	popad
+	pop		ebp
+	ret		12
+printArr ENDP
+
+
+;--------------------------------
+;Preconditions:	push params in order OFFSET NUM, OFFSET storage_var. Storage var must be at least 11 bytes	
+;PostConditions: numeric value has been displayed to screen as a string
+;Description: Takes a numeric value, converts it to a string, and displays it to the screen
+;Dependencies: displayString
 ;--------------------------------
 writeVal PROC
 	push	ebp
 	mov		ebp,esp
+	pushad
 
-	;mov		edi, [ebp+8]			;fill first 21 bytes of storage val with \0
-	mov		edi, OFFSET temp_input
+	mov		edi, [ebp+8]			;fill first 21 bytes of storage val with \0 (gives room to construct string backwards)
 	mov		al, 0
 	mov		ecx, 21
 	cld
@@ -98,9 +120,9 @@ writeVal PROC
 	dec		edi						;keep a null terminator
 	std								;set direction to go backwards
 	
-	;mov		ebx, [ebp+12]			;initialize eax to num
-	;mov		eax, [ebx]
-	mov		eax, num_result
+	mov		ebx, [ebp+12]			;initialize eax to num
+	mov		eax, [ebx]
+	;mov		eax, num_result
 top:
 	mov		ebx, 0
 	cmp		eax, ebx
@@ -119,21 +141,20 @@ top:
 
 start_shift:
 	cld
-	mov		esi, edi				;move  string to the front of the storage variable
+	mov		esi, edi				;move string to the front of the storage variable
 	inc		esi
-	;mov		edi, [ebp+8]
-	mov		edi, OFFSET temp_input
+	mov		edi, [ebp+8]
 shift:
 	mov		ebx, 0
-	cmp		[esi], ebx				;compare esi to null
+	cmp		[esi], ebx				;compare esi to null (will be end of string shift)
 	je		bottom
 	lodsb
 	stosb
 	jmp		shift
 	jmp		bottom
 bottom:
-	;displayString	[ebp+8]
-	displayString	OFFSET temp_input
+	displayString	[ebp+8]			;display storage value
+	popad
 	pop				ebp
 	ret				8
 writeVal ENDP
@@ -147,7 +168,7 @@ writeVal ENDP
 readVal PROC   
     push        ebp                     ;create stack frame
     mov         ebp, esp
-
+	pushad
 	mov			esi, [ebp+20]			;set ESI to the start of the array
 
     mov         ecx, arr_size           ;get an arrays worth of ints fromuser
@@ -165,7 +186,8 @@ promptUser:
 	je			err
 
 	mov			eax, [ebp+12]
-	mov			[esi], eax				;APPEND NUM_RES TO NUM_ARR
+	mov			ebx, [eax]
+	mov			[esi], ebx				;APPEND NUM_RES TO NUM_ARR
 	add			esi, 4
 	loop		promptUser
 	jmp			bottom
@@ -176,6 +198,7 @@ err:
 	jmp			promptUser
 
 bottom:
+	popad
     pop         ebp
 	ret         16
 readVal ENDP
@@ -242,4 +265,5 @@ bottom:
 validateString ENDP
 
 END main
+
 
