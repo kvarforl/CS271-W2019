@@ -43,7 +43,7 @@ introHeader		BYTE		"Lindsey Kvarfordt",10,"--Low Level I/O--",10,"This program w
 intPrompt		BYTE		"Please enter an unsigned integer: ",0
 results			BYTE		"-----RESULTS-----",0
 arrayHeader     BYTE        "Your numbers: ",0
-sumHeader    BYTE        "Sum: ",0
+sumHeader		BYTE        "Sum: ",0
 averageHeader   BYTE        "Average: ",0
 errorMssg		BYTE		"ERROR! Try again.",0
 temp_input      BYTE        81 dup(?)
@@ -76,14 +76,50 @@ main PROC
 	push	OFFSET num_arr
 	call	displaySum
 
+	push	OFFSET averageHeader
+	push	OFFSET temp_input
+	push	OFFSET sum
+	call	displayAverage
+
 	exit	; exit to operating system
 main ENDP
+;--------------------------------
+;Preconditions:	push OFFSET averageHeader, OFFSET temp_input, OFFSET sum. Call after displaySum
+;PostConditions: Sum variable now holds the average
+;Description: 
+;Dependencies: 
+;--------------------------------
+displayAverage PROC
+	push	ebp
+	mov		ebp, esp
+	pushad
+
+	displayString	[ebp+16]		;display header
+
+	mov		ebx, [ebp+8]			;divide sum by 10
+	mov		eax, [ebx]
+	cdq
+	mov		ebx, 10
+	div		ebx
+
+	mov		ebx, [ebp+8]			;store the division result in sum
+	mov		[ebx], eax
+
+	push	[ebp+8]					;display the result
+	push	[ebp+12]
+	call	WriteVal
+	call	crlf
+
+	popad
+	pop		ebp
+	ret		12
+displayAverage ENDP
 
 ;--------------------------------
-;Preconditions:	push OFFSET sumHeader. OFFSET temp_input, OFFSET sum_storage, OFFSET arr 
-;PostConditions: 
-;Description: 
-;Dependencies:
+;Preconditions:	push OFFSET sumHeader. OFFSET temp_input, OFFSET sum_storage, OFFSET arr. arr is populated with integers
+;PostConditions: Sum variable holds the sum of the array
+;Description: Sums the contents of a numerical array. Displays the result using writeVal
+;Dependencies: writeVal, displayString
 ;--------------------------------
 displaySum PROC
 	push	ebp
@@ -311,3 +347,4 @@ bottom:
 validateString ENDP
 
 END main
+
